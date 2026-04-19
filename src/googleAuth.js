@@ -10,16 +10,28 @@ const vision = require('@google-cloud/vision');
 function getCredentials() {
   const b64 = process.env.GOOGLE_SERVICE_ACCOUNT_BASE64;
   if (b64) {
+    const bytes = Buffer.from(b64.trim(), 'base64');
+
+    // Try UTF-8 (standard)
     try {
-      const json = Buffer.from(b64.trim(), 'base64').toString('utf8');
+      const json = bytes.toString('utf8').replace(/^\uFEFF/, '');
       return JSON.parse(json);
-    } catch (err) {
-      throw new Error(
-        'GOOGLE_SERVICE_ACCOUNT_BASE64 o\'qib bo\'lmadi: ' + err.message
-      );
-    }
+    } catch (_) {}
+
+    // Try UTF-16 LE (Windows Notepad default when saving JSON)
+    try {
+      const json = bytes.toString('utf16le').replace(/^\uFEFF/, '');
+      return JSON.parse(json);
+    } catch (_) {}
+
+    throw new Error(
+      'GOOGLE_SERVICE_ACCOUNT_BASE64 o\'qib bo\'lmadi. ' +
+      'Quyidagi PowerShell buyrug\'ini ishlating:\n' +
+      '$t = Get-Content "fayl.json" -Encoding UTF8 -Raw; ' +
+      '[Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($t)) | Set-Clipboard'
+    );
   }
-  return null; // falls back to GOOGLE_APPLICATION_CREDENTIALS file
+  return null;
 }
 
 async function getSheetsClient() {
