@@ -1,9 +1,7 @@
 require('dotenv').config();
-const vision = require('@google-cloud/vision');
 const axios = require('axios');
+const { getVisionClient } = require('./googleAuth');
 const logger = require('./logger');
-
-const client = new vision.ImageAnnotatorClient();
 
 /**
  * Downloads image from a URL and returns it as a base64 string.
@@ -23,6 +21,7 @@ async function extractTextFromImage(imageUrl) {
 
     const base64Image = await downloadImageAsBase64(imageUrl);
 
+    const client = getVisionClient();
     const [result] = await client.textDetection({
       image: { content: base64Image },
     });

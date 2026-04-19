@@ -1,5 +1,5 @@
 require('dotenv').config();
-const { google } = require('googleapis');
+const { getSheetsClient } = require('./googleAuth');
 const logger = require('./logger');
 
 const SPREADSHEET_ID = process.env.SPREADSHEET_ID;
@@ -10,11 +10,7 @@ let sheetsClient = null;
 
 async function getClient() {
   if (sheetsClient) return sheetsClient;
-  const auth = new google.auth.GoogleAuth({
-    keyFile: process.env.GOOGLE_APPLICATION_CREDENTIALS,
-    scopes: ['https://www.googleapis.com/auth/spreadsheets'],
-  });
-  sheetsClient = google.sheets({ version: 'v4', auth });
+  sheetsClient = await getSheetsClient();
   return sheetsClient;
 }
 
