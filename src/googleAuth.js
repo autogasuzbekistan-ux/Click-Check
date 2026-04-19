@@ -9,10 +9,30 @@ const vision = require('@google-cloud/vision');
  *   2. Full JSON: GOOGLE_SERVICE_ACCOUNT_JSON (fallback)
  *   3. File path: GOOGLE_APPLICATION_CREDENTIALS (local dev)
  */
+function normalizePrivateKey(raw) {
+  let key = raw.trim();
+
+  // Strip accidental surrounding quotes
+  if ((key.startsWith('"') && key.endsWith('"')) ||
+      (key.startsWith("'") && key.endsWith("'"))) {
+    key = key.slice(1, -1);
+  }
+
+  // Strip trailing comma (common copy-paste mistake from JSON)
+  key = key.replace(/,\s*$/, '');
+
+  // Convert literal \n sequences → real newlines (if not already newlines)
+  if (!key.includes('\n')) {
+    key = key.replace(/\\n/g, '\n');
+  }
+
+  return key;
+}
+
 function getCredentials() {
   // Mode 1: individual env vars (most reliable on Railway)
   if (process.env.GOOGLE_CLIENT_EMAIL && process.env.GOOGLE_PRIVATE_KEY) {
-    const privateKey = process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n');
+    const privateKey = normalizePrivateKey(process.env.GOOGLE_PRIVATE_KEY);
     return {
       type: 'service_account',
       project_id: process.env.GOOGLE_PROJECT_ID || '',
