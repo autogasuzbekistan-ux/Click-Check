@@ -15,6 +15,7 @@ function getCredentials() {
     const bytes = Buffer.from(b64, 'base64');
 
     const logger = require('./logger');
+    logger.info(`RAW variable first 80 chars: [${b64raw.slice(0, 80)}]`);
     logger.info(`BASE64 length: ${b64.length}, decoded bytes: ${bytes.length}`);
     logger.info(`First 20 bytes hex: ${bytes.slice(0, 20).toString('hex')}`);
 
