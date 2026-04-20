@@ -8,27 +8,35 @@ const vision = require('@google-cloud/vision');
  *  2. GOOGLE_APPLICATION_CREDENTIALS — local file path (local dev)
  */
 function getCredentials() {
-  const b64 = process.env.GOOGLE_SERVICE_ACCOUNT_BASE64;
-  if (b64) {
-    const bytes = Buffer.from(b64.trim(), 'base64');
+  const b64raw = process.env.GOOGLE_SERVICE_ACCOUNT_BASE64;
+  if (b64raw) {
+    // Strip ALL whitespace (spaces, newlines, tabs) — clipboard often adds them
+    const b64 = b64raw.replace(/\s/g, '');
+    const bytes = Buffer.from(b64, 'base64');
 
-    // Try UTF-8 (standard)
+    const logger = require('./logger');
+    logger.info(`BASE64 length: ${b64.length}, decoded bytes: ${bytes.length}`);
+    logger.info(`First 20 bytes hex: ${bytes.slice(0, 20).toString('hex')}`);
+
+    // Try UTF-8
     try {
       const json = bytes.toString('utf8').replace(/^\uFEFF/, '');
-      return JSON.parse(json);
+      const creds = JSON.parse(json);
+      logger.info('Credentials loaded via UTF-8');
+      return creds;
     } catch (_) {}
 
-    // Try UTF-16 LE (Windows Notepad default when saving JSON)
+    // Try UTF-16 LE (Windows default encoding)
     try {
       const json = bytes.toString('utf16le').replace(/^\uFEFF/, '');
-      return JSON.parse(json);
+      const creds = JSON.parse(json);
+      logger.info('Credentials loaded via UTF-16 LE');
+      return creds;
     } catch (_) {}
 
     throw new Error(
-      'GOOGLE_SERVICE_ACCOUNT_BASE64 o\'qib bo\'lmadi. ' +
-      'Quyidagi PowerShell buyrug\'ini ishlating:\n' +
-      '$t = Get-Content "fayl.json" -Encoding UTF8 -Raw; ' +
-      '[Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($t)) | Set-Clipboard'
+      `GOOGLE_SERVICE_ACCOUNT_BASE64 o'qib bo'lmadi. ` +
+      `decoded_bytes=${bytes.length}, hex_start=${bytes.slice(0, 8).toString('hex')}`
     );
   }
   return null;
